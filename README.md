@@ -40,8 +40,7 @@ Los códigos están definidos en `configuracion.py` como `Elemento.aire`,
 `Elemento.arena`, `Elemento.agua`, etc.: aire (0), arena (1), agua
 (2), piedra (3), tierra (4), fuego (5), semilla (6), pasto (7), etapas de planta
 (8, 9 y 10) y animal terrestre (11). El pasto se genera cuando el agua toca la
-tierra. Las semillas germinan sobre pasto; las plantas crecen gradualmente
-hacia arriba, en tres etapas, y se detienen si no hay espacio. El animal se
+tierra. Las semillas germinan cuando se encuentran sobre pasto. Una vez germinadas, las plantas pasan por tres etapas de crecimiento. Cada etapa se representa dentro de una misma casilla de la matriz, sin ocupar espacio adicional. El animal se
 mueve hacia la derecha, cae si no tiene soporte y evita el agua y los
 obstáculos.
 
@@ -69,3 +68,49 @@ python -m unittest -v
 
 Las pruebas se encuentran en `test_simulador.py`, si está presente en el
 proyecto.
+
+## Cómo ejecutar el Sandbox
+
+1. Tener Python 3 instalado en la computadora.
+2. Instalar la librería Pillow si todavía no está instalada.
+3. Mantener los archivos `interfaz.py`, `simulador.py`, `configuracion.py` y la carpeta `recursos` dentro de la misma carpeta del proyecto.
+4. Abrir el archivo `interfaz.py` utilizando IDLE.
+5. Seleccionar **Run > Run Module** o presionar **F5**.
+6. Esperar a que aparezca la ventana del Sandbox.
+
+El programa permite crear mundos de diferentes tamaños, colocar elementos, observar sus interacciones y guardar o cargar simulaciones.
+
+## Cómo utilizar el Sandbox
+
+### Elementos disponibles
+
+- Arena: cae por gravedad y puede desplazarse diagonalmente.
+- Agua: fluye hacia abajo y hacia los lados.
+- Piedra: permanece fija y funciona como obstáculo.
+- Tierra: puede transformarse en pasto al entrar en contacto con agua.
+- Fuego: se propaga sobre materiales combustibles y puede apagarse con agua.
+- Semilla: germina cuando encuentra las condiciones adecuadas sobre el pasto.
+- Conejo: se desplaza horizontalmente y evita obstáculos y agua.
+
+### Herramientas
+
+- Pincel: permite colocar elementos en el mundo haciendo clic o arrastrando el mouse.
+- Tamaño del pincel: permite cambiar el área de dibujo.
+- Borrador: elimina elementos del mundo.
+- Rectángulo: permite rellenar una región con el elemento seleccionado.
+
+### Simulación
+
+- Iniciar: permite observar el comportamiento de los elementos.
+- Pausar: detiene temporalmente la simulación.
+- Limpiar: elimina los elementos del mundo.
+- Tamaño del mundo: permite trabajar con matrices desde 20x20 hasta 100x100.
+
+### Guardar y cargar
+
+- Guardar: almacena el estado del mundo en un archivo JSON.
+- Cargar: recupera un mundo guardado anteriormente.
+
+El usuario también puede editar el mundo mientras la simulación está funcionando.
+
+Pillow>=13.0.0
