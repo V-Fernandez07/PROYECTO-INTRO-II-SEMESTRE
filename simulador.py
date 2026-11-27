@@ -464,19 +464,11 @@ class Simulador:
             if planta.progreso < self.ritmo_planta:
                 continue
 
-            fila_superior, columna = planta.celdas[-1]
-            destino = (fila_superior - 1, columna)
-            if not self._en_mundo(*destino) or not self._vacia(destino):
-                planta.progreso = self.ritmo_planta - 1
-                continue
-
-            siguiente_etapa = planta.etapa + 1
-            planta.celdas.append(destino)
-            planta.etapa = siguiente_etapa
+            fila, columna = planta.celdas[0]
+            planta.etapa += 1
             planta.progreso = 0
-            self._planta_en[destino] = id_planta
-            self._matriz[destino[0]][destino[1]] = (
-                int(Elemento.planta_1) + siguiente_etapa - 1
+            self._matriz[fila][columna] = (
+                int(Elemento.planta_1) + planta.etapa - 1
             )
 
     # Reduce la duración de los fuegos, los apaga o intenta propagarlos.
@@ -675,25 +667,21 @@ class Simulador:
             celdas_crudas = registro.get("cells")
             if (
                 not isinstance(celdas_crudas, list)
-                or len(celdas_crudas) != etapa - etapa_inicial + 1
+                or len(celdas_crudas) != 1
             ):
                 raise ValueError("Las celdas de la planta no corresponden con la etapa guardada.")
 
             celdas = [
                 Simulador._leer_posicion(celda_cruda, tamano) for celda_cruda in celdas_crudas
             ]
-            for indice, posicion in enumerate(celdas):
-                fila_esperada = celdas[0][0] - indice
-                if posicion[0] != fila_esperada:
-                    raise ValueError("Las celdas de una planta deben formar una columna vertical.")
-                codigo_esperado = int(Elemento.planta_1) + etapa_inicial + indice - 1
-                if matriz[posicion[0]][posicion[1]] != codigo_esperado:
-                    raise ValueError("Los datos de la planta no corresponden con la matriz del mapa.")
-                if posicion in planta_en:
-                    raise ValueError("Una celda no puede pertenecer a dos plantas.")
-                planta_en[posicion] = id_planta
-            if any(posicion[1] != celdas[0][1] for posicion in celdas):
-                raise ValueError("Las celdas de una planta deben estar en la misma columna.")
+            posicion = celdas[0]
+            fila, columna = posicion
+            codigo_esperado = int(Elemento.planta_1) + etapa - 1
+            if matriz[fila][columna] != codigo_esperado:
+                raise ValueError("Los datos de la planta no corresponden con la matriz del mapa.")
+            if posicion in planta_en:
+                raise ValueError("Una celda no puede pertenecer a dos plantas.")
+            planta_en[posicion] = id_planta
             plantas[id_planta] = _Planta(celdas, etapa_inicial, etapa, progreso)
 
         celdas_planta_matriz = {
