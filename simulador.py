@@ -514,8 +514,17 @@ class Simulador:
         for fila, columna in sorted(animales, key=lambda celda: (celda[0], -celda[1])):
             if self._matriz[fila][columna] != Elemento.animal.value:
                 continue
+            if any(
+                self._matriz[vecina[0]][vecina[1]] == Elemento.fuego.value
+                for vecina in self._adyacentes((fila, columna))
+            ):
+                self._matriz[fila][columna] = Elemento.aire.value
+                continue
 
             debajo = (fila + 1, columna)
+            if fila + 1 < self._tamano and self._matriz[debajo[0]][debajo[1]] == Elemento.fuego.value:
+                self._matriz[fila][columna] = Elemento.aire.value
+                continue
             if fila + 1 < self._tamano and self._vacia(debajo):
                 self._mover((fila, columna), debajo)
                 continue
@@ -523,11 +532,20 @@ class Simulador:
                 continue
 
             destino = (fila, columna + 1)
-            if (
-                self._en_mundo(*destino)
-                and self._vacia(destino)
-                and self._apoyado(*destino)
-            ):
+            if not self._en_mundo(*destino) or not self._apoyado(*destino):
+                continue
+
+            elemento_destino = Elemento(self._matriz[destino[0]][destino[1]])
+            if elemento_destino == Elemento.agua or elemento_destino == Elemento.fuego:
+                continue
+            if elemento_destino in etapas_planta:
+                id_planta = self._planta_en.get(destino)
+                if id_planta is not None:
+                    self._quitar_planta(id_planta)
+            elif elemento_destino == Elemento.pasto:
+                self._matriz[destino[0]][destino[1]] = Elemento.aire.value
+
+            if self._vacia(destino):
                 self._mover((fila, columna), destino)
 
     # Comprueba si una celda tiene suelo u otro material que sostenga al animal.

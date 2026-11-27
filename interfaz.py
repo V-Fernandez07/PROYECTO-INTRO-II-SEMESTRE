@@ -4,15 +4,26 @@ import ctypes
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from simulador import Simulador
-from configuracion import Elemento
+from configuracion import Elemento, tamano_minimo, tamano_maximo
 
-ANCHO_MUNDO = 600
-ALTO_MUNDO = 600
 RUTA_BASE = os.path.dirname(os.path.abspath(__file__))
 RUTA_RECURSOS = os.path.join(RUTA_BASE, 'recursos')
 RUTA_MUSICA = os.path.join(RUTA_RECURSOS, 'audio', 'audio-juego.mp3')
 
 simulador = Simulador()
+TAMANO_LIENZO_MINIMO = 300
+TAMANO_LIENZO_MAXIMO = 600
+
+
+def calcular_tamano_lienzo(tamano_matriz):
+    """Devuelve el tamaño visual proporcional al tamaño de la matriz."""
+    proporcion = (tamano_matriz - tamano_minimo) / (tamano_maximo - tamano_minimo)
+    lado = TAMANO_LIENZO_MINIMO + proporcion * (TAMANO_LIENZO_MAXIMO - TAMANO_LIENZO_MINIMO)
+    return round(lado)
+
+
+ANCHO_MUNDO = calcular_tamano_lienzo(simulador.tamano)
+ALTO_MUNDO = ANCHO_MUNDO
 elemento_seleccionado = Elemento.arena
 simulacion_pausada = False
 modo_rectangulo = False
@@ -112,8 +123,8 @@ def seleccionar_elemento(elemento):
 
 def coordenadas_validas(evento):
     """Convierte la posición del mouse a fila y columna de la matriz."""
-    fila = int(evento.y // tamano_celda)
-    columna = int(evento.x // tamano_celda)
+    fila = int(evento.y * simulador.tamano // ALTO_MUNDO)
+    columna = int(evento.x * simulador.tamano // ANCHO_MUNDO)
     if 0 <= fila < simulador.tamano and 0 <= columna < simulador.tamano:
         return fila, columna
     return None
@@ -239,11 +250,16 @@ def limpiar_mundo():
 
 def cambiar_tamano_matriz():
     """Redimensiona la matriz y reconstruye las casillas gráficas."""
-    global tamano_celda, primera_esquina
+    global tamano_celda, primera_esquina, ANCHO_MUNDO, ALTO_MUNDO
     try:
         simulador.redimensionar(int(escala_matriz.get()))
+        ANCHO_MUNDO = calcular_tamano_lienzo(simulador.tamano)
+        ALTO_MUNDO = ANCHO_MUNDO
         tamano_celda = ANCHO_MUNDO / simulador.tamano
         primera_esquina = None
+        lienzo.configure(width=ANCHO_MUNDO, height=ALTO_MUNDO)
+        escala_pincel.configure(from_=1, to=simulador.tamano)
+        escala_pincel.set(simulador.tamano_pincel)
         preparar_imagenes()
         reconstruir_lienzo()
     except Exception as error:
@@ -262,14 +278,19 @@ def guardar_mundo():
 
 def cargar_mundo():
     """Carga un mundo y muestra un error si el archivo no es válido."""
-    global tamano_celda, primera_esquina
+    global tamano_celda, primera_esquina, ANCHO_MUNDO, ALTO_MUNDO
     ruta = filedialog.askopenfilename(filetypes=[('Archivos JSON', '*.json')])
     if ruta:
         try:
             simulador.cargar(ruta)
+            ANCHO_MUNDO = calcular_tamano_lienzo(simulador.tamano)
+            ALTO_MUNDO = ANCHO_MUNDO
             tamano_celda = ANCHO_MUNDO / simulador.tamano
             primera_esquina = None
             escala_matriz.set(simulador.tamano)
+            lienzo.configure(width=ANCHO_MUNDO, height=ALTO_MUNDO)
+            escala_pincel.configure(from_=1, to=simulador.tamano)
+            escala_pincel.set(simulador.tamano_pincel)
             preparar_imagenes()
             reconstruir_lienzo()
         except Exception as error:
@@ -331,7 +352,8 @@ etiqueta_seleccion.pack(pady=4)
 tk.Label(panel, text='TAMAÑO DEL PINCEL', font=('Courier', 10, 'bold'), bg='#f8f0dd').pack(pady=(8, 0))
 escala_pincel = tk.Scale(panel, from_=1, to=5, orient='horizontal', bg='#f8f0dd', highlightthickness=0, command=cambiar_tamano_pincel)
 escala_pincel.pack()
-escala_pincel.set(1)
+escala_pincel.configure(to=simulador.tamano)
+escala_pincel.set(simulador.tamano_pincel)
 
 tk.Label(panel, text='SIMULACIÓN', font=('Courier', 12, 'bold'), bg='#f8f0dd').pack(pady=(8, 4))
 boton_pausa = tk.Button(panel, text='⏸ Pausar', width=22, command=pausar_continuar)

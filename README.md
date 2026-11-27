@@ -2,6 +2,11 @@
 
 La lógica está separada de la interfaz y se encuentra en `simulador.py`. La configuración y los códigos de elementos están en `configuracion.py`. La interfaz puede consultar la matriz, pero debe cambiar el mundo mediante los métodos de `Simulador`.
 
+## Integrantes
+
+- Victoria Fernandez
+- Segundo integrante: agregar el nombre completo antes de entregar
+
 ```python
 from configuracion import Elemento
 from simulador import Simulador
@@ -57,6 +62,13 @@ Los mapas se guardan como JSON legible. Las claves de ese formato (por ejemplo,
 elementos se guardan en español. También se guardan las etapas y el progreso de
 las plantas, el estado del fuego y los parámetros necesarios para reanudar la
 simulación. El cargador requiere los nombres actuales en español.
+
+## Música
+
+El archivo `recursos/audio/audio-juego.mp3` se reproduce desde el botón
+`♫ Activar música`. El mismo botón cambia a `♫ Quitar música` y detiene el
+audio. La reproducción utiliza el reproductor multimedia nativo de Windows,
+por lo que no requiere instalar pygame ni otra biblioteca de audio.
 
 ## Pruebas
 
