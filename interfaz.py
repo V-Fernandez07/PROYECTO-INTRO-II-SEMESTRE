@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+import ctypes
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from simulador import Simulador
@@ -9,12 +10,14 @@ ANCHO_MUNDO = 600
 ALTO_MUNDO = 600
 RUTA_BASE = os.path.dirname(os.path.abspath(__file__))
 RUTA_RECURSOS = os.path.join(RUTA_BASE, 'recursos')
+RUTA_MUSICA = os.path.join(RUTA_RECURSOS, 'audio', 'audio-juego.mp3')
 
 simulador = Simulador()
 elemento_seleccionado = Elemento.arena
 simulacion_pausada = False
 modo_rectangulo = False
 primera_esquina = None
+musica_activa = False
 tamano_celda = ANCHO_MUNDO / simulador.tamano
 imagenes_originales = {}
 imagenes_tk = {}
@@ -163,6 +166,60 @@ def pausar_continuar():
     boton_pausa.configure(text='▶ Continuar' if simulacion_pausada else '⏸ Pausar')
 
 
+def reproducir_musica():
+    """Enciende o apaga la música de fondo mediante el reproductor de Windows."""
+    global musica_activa
+
+    if not os.path.isfile(RUTA_MUSICA):
+        messagebox.showerror('Error de música', 'No se encontró el archivo de audio.')
+        return
+
+    if musica_activa:
+        resultado = ctypes.windll.winmm.mciSendStringW(
+            'stop sandbox_musica', None, 0, None
+        )
+        musica_activa = False
+        boton_musica.configure(text='♫ Activar música')
+        if resultado != 0:
+            messagebox.showerror('Error de música', 'No se pudo detener el audio.')
+        return
+
+    ctypes.windll.winmm.mciSendStringW(
+        'close sandbox_musica', None, 0, None
+    )
+    resultado = ctypes.windll.winmm.mciSendStringW(
+        f'open "{RUTA_MUSICA}" alias sandbox_musica', None, 0, None
+    )
+    if resultado != 0:
+        messagebox.showerror('Error de música', 'No se pudo abrir el archivo de audio.')
+        return
+
+    resultado = ctypes.windll.winmm.mciSendStringW(
+        'play sandbox_musica repeat', None, 0, None
+    )
+    if resultado != 0:
+        ctypes.windll.winmm.mciSendStringW(
+            'close sandbox_musica', None, 0, None
+        )
+        messagebox.showerror('Error de música', 'No se pudo reproducir el audio.')
+        return
+
+    musica_activa = True
+    boton_musica.configure(text='♫ Quitar música')
+
+
+def cerrar_ventana():
+    """Detiene la música antes de cerrar la aplicación."""
+    if musica_activa:
+        ctypes.windll.winmm.mciSendStringW(
+            'stop sandbox_musica', None, 0, None
+        )
+        ctypes.windll.winmm.mciSendStringW(
+            'close sandbox_musica', None, 0, None
+        )
+    ventana.destroy()
+
+
 def activar_rectangulo():
     """Activa o desactiva el modo de relleno rectangular."""
     global modo_rectangulo, primera_esquina
@@ -279,6 +336,8 @@ escala_pincel.set(1)
 tk.Label(panel, text='SIMULACIÓN', font=('Courier', 12, 'bold'), bg='#f8f0dd').pack(pady=(8, 4))
 boton_pausa = tk.Button(panel, text='⏸ Pausar', width=22, command=pausar_continuar)
 boton_pausa.pack(pady=2)
+boton_musica = tk.Button(panel, text='♫ Activar música', width=22, command=reproducir_musica)
+boton_musica.pack(pady=2)
 boton_rectangulo = tk.Button(panel, text='▣ Rectángulo: OFF', width=22, command=activar_rectangulo)
 boton_rectangulo.pack(pady=2)
 tk.Button(panel, text='Limpiar mundo', width=22, command=limpiar_mundo).pack(pady=2)
@@ -298,6 +357,7 @@ etiqueta_estado.pack(pady=8)
 
 lienzo.bind('<Button-1>', pintar)
 lienzo.bind('<B1-Motion>', pintar_arrastrando)
+ventana.protocol('WM_DELETE_WINDOW', cerrar_ventana)
 seleccionar_elemento(Elemento.arena)
 reconstruir_lienzo()
 actualizar_mundo()
